@@ -1,0 +1,198 @@
+# LAB: VPC Networking in Essential Google Cloud Infrastructure: Foundation
+
+## Objectives
+
+In this lab, you learn how to perform the following tasks:
+
+    - Explore the default VPC Network
+
+    - Create an auto mode network with firewall rules
+
+    - Convert an auto mode network to a custom network
+
+    - Create custom mode VPC networks with firewall rules
+
+    - Create VM instances using Compute Engine
+
+    - Explore the connectivity of VM instances across VPC networks
+
+## Steps
+
+1. Explore the default network
+
+    - Each Google Cloud project has a default network to get you started
+
+    1. View the subnets
+
+        - The default network has a subnet in each region
+
+            gcloud compute networks subnets list
+    
+    2. View the routes
+
+        - The default network has default routes to route traffic among its subnets and send traffic from eligible instances to the internet.
+
+            gcloud compute routes list
+
+    3. View the firewall rules
+
+        - Every VPC network has two implied firewall rules that block all incoming connections and allow all outgoing connections.
+
+            gcloud compute firewall-rules list
+
+    4. Delete the firewall rules
+
+            gcloud compute firewall-rules delete
+
+    5. Delete the default VPC network
+
+            gcloud compute networks delete
+
+    6. Try to create a VM instance
+
+        - Without a network, you cannot create a VM instance. Try it with the following command
+
+            gcloud compute instances create
+        
+        - An error will be returned.
+
+2. Create an auto mode network
+
+    1. Create an auto mode VPC network with firewall rules
+
+        - Auto mode networks are easy to set up and use because they automatically create subnets in each region. However, you don't have complete control over the subnets created in your VPC network, including regions and IP address ranges used.
+
+            gcloud compute networks create mynetwork --subnet-mode=auto --bgp-routing mode=global
+
+    2. Create a VM instance in us-central 1
+
+            gcloud compute instances create mynet-us-vm --machine type=n1-standard-1 --zone=us-central1-c
+
+    3. Create a VM instance in europe-west 1
+
+            gcloud compute instances create mynet-eu-vm --machine type=n1-standard-1 --zone=europe-west1-c
+    
+    4. Verify connetivity for the two VM instances
+
+        - Connect to mynet-us-vm
+
+            gcloud compute ssh mynet-us-vm
+        
+        - Ping mynet-eu-vm from myney-us-vm
+
+            ping -c 3 mynet-eu-vm
+    
+    5. Convert auto mode network to custom mode network
+
+            gcloud compute networks update mynetwork --switch-to-custom-subnet-mode
+
+3. Create custom mode networks
+
+    - You have been tasked to create two additional custom networks, managementnet and privatenet, along with firewall rules to allow SSH, ICMP, and RDP ingress traffic and VM instances
+
+    1. Create the managementnet network
+
+            gcloud compute networks create managementnet --subnet-mode=custom
+
+        - Create the managementnet-us subnet
+
+            gcloud compute networks subnets create managementnet-us --network=managementnet --region=us-central1 --range=10.130.0.0/20
+
+    2. Create the privatenet network.
+
+            gcloud compute networks create privatenet --subnet-mode=custom
+
+        - Create the privatesubnet-us subnet
+
+            gcloud compute networks subnets create privatesubnet-us --network=privatenet --region=us-central1 --range=172.16.0.0/24
+
+        - Create the privatesubnet-eu subnet
+
+            gcloud compute networks subnets creare privatesubnet-eu --network=privatenet --region=europe-west1 --range=172.20.0.0/20
+
+        - List and view all the available VPC networks
+
+            gcloud compute networks list
+
+        - List and view all the available subnets
+
+            gcloud compute networks subnets list --sort-by=NETWORK
+    
+    3. Create the firewall rules for managementnet and privatenet
+
+            gcloud compute firewall-rules create managementnet-allow icmp-ssh-rdp --direction=INGRESS --priority=1000 --network=managementnet --action=ALLOW --rules=icmp, tcp:22, tcp:3389 --source-ranges=0.0.0.0/0
+
+            gcloud compute firewall-rules create privatenet-allow-icmp-ssh-rdp --direction=INGRESS --priority=1000 --network=privatenet --action=ALLOW --rules=icmp,tcp:22,tcp:3389 --source-ranges=0.0.0.0/0
+        
+        - List and view all firewall rules created (sorted by VPC network)
+
+            gcloud compute firewall-rules list --sort-by=NETWORK
+    
+    4. Create two instances: managementnet-us-vm in managementsubnet-us and privatenet-us-vm in privatesubnet-us
+
+        - Create the managementnet-us-vm instance
+
+            gcloud compute instances create managementnet-us-vm --zone=us-central1-c --machine-type=f1-micro --subnet=managementsubnet-us
+
+        - Create the privatenet-us-vm instance
+
+            gcloud compute instances create privatenet-us-vm --zone=us-central1-c --machine-type=f1-micro --subnet=privatesubnet-us
+
+        - List and view all the instances created
+
+            gcloud compute instances list --sort-by=ZONE
+
+4. Explore connectivity across the networks
+
+    1. Ping the external addresses
+
+        - Connect to mynet-us-vm
+
+            gcloud compute ssh mynet-us-vm
+
+        - Ping mynet-eu-vm's external IP from mynet-us-vm
+
+            ping -c 3 <Enter mynet-eu-vm's external IP here>
+
+        - Ping managemetnet-eu-vm's external IP address from mynet-us-vm
+
+            ping -c 3 <Enter privatenet-us-vm's external IP here>
+
+        - This should work just fine!
+    
+    2. Ping the internal addresses
+
+        - Connect to mynet-us-vm
+
+            gcloud compute ssh mynet-us-vm
+
+        - Ping mynet-eu-vm's internal IP from mynet-us-vm
+
+            ping -c 3 <Enter mynet-eu-vm's internal IP here>
+
+        - You can ping the internal IP address of mynet-eu-vm because it is on the same VPC network as the source of the ping (mynet-us-vm), even though both VM instances are in separate zones, regions, and continents!
+
+        - Ping managemetnet-us-vm's internal IP address from mynet-us-vm
+
+            ping -c 3 <Enter managementnet-us-vm's internal IP here>
+
+        - This should not work!
+
+        - Ping privatenetnet-us-vm's internal IP address from mynet-us-vm
+
+            ping -c 3 <Enter privatenet-us-vm's internal IP here>
+
+        - This should not work either. You cannot ping the internal IP address of managementnet-us-vm and privatenet-us-vm because they are in separate VPC networks from the source of the ping (mynet-us-vm), even though they are all in the same zone, us-central1-c.
+
+    
+
+    
+
+
+
+
+
+
+
+
+            
