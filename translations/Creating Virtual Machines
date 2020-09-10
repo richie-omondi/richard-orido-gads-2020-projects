@@ -1,0 +1,64 @@
+# LAB: Creating Virtual Machines in Essential Google Cloud Infastructure: Foundation
+
+## Objectives
+
+In this lab, you will explore the Virtual Machine instance options and create several VMs with different characteristics in different locations.
+
+In this lab, you learn how to perform the following tasks:
+
+    - Create several standard VMs
+
+    - Create advanced VMs
+
+## Steps
+
+1. Create a Utility Virtual Machine
+
+    1. Create a VM
+
+        gcloud compute instances create myutility-vm --machine type=n1-standard-1 --no-address --zone=us-central1-c
+    
+    2. List and view VM logs
+
+        gcloud logging logs list
+
+2. Create a Windows Virtual Machine
+
+        gcloud compute instances create mywindows-vm --zone=europe-west2-a --image-project windows-cloud --image-family windows-2016-core --machine-type n1-standard-2 --boot-disk-size 100 --boot-disk-type pd-ssd
+
+    1. Set the password for the VM
+
+        gcloud compute reset-windows-password myutility-vm
+
+3. Create a Custom VM
+
+    1. Create a VM
+
+        gcloud compute instances create mycustom-vm --zone=use-west1-b --custom-cpu 6 --custom-memory 32
+
+    2. Connect via SSH to the custom VM
+
+        gcloud compute ssh mycustom-vm
+
+            - To see information about unused and used memory and swap space on your custom VM, run the following command:
+
+                free
+            
+            - To see details about the RAM installed on your VM, run the following command:
+
+                sudo dmidecode -t 17
+
+            - To verify the number of processors, run the following command:
+
+                nproc
+
+            - To see details about the CPUs installed on your VM, run the following command:
+
+                lscpu
+
+            - To exit the SSH terminal, run the following command:
+
+                exit
+
+
+
